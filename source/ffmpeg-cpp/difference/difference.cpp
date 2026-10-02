@@ -16,7 +16,7 @@ int main()
 		// Create a muxer that will output the video as MKV.
 		Muxer* muxer = new Muxer("out.mp4");
 
-		// Create a codec that will encode video as VP9
+		// Create a codec that will encode video as PNG
 		PNGCodec* videoCodec = new PNGCodec();
 
 		// Create encoders for both
@@ -24,11 +24,9 @@ int main()
 
 		// Create a video filter and do some funny stuff with the video data.
 		Filter* filter = new Filter("blend=all_mode=difference", videoEncoder);
-		//VideoFilter* filter = new VideoFilter("overlay=0:0", videoEncoder);
-		//VideoFilter* filter = new VideoFilter("scale=100:800", videoEncoder);
 
 		// Create a video filter that will put a vignette on one of the video's,
-		// so that our difference filter van detect this.
+		// so that our difference filter can detect this.
 		Filter* vignetteFilter = new Filter("vignette", filter);
 
 		// Load both video's
@@ -56,16 +54,22 @@ int main()
 
 		// Save everything to disk by closing the muxer.
 		muxer->Close();
+
+		delete videoContainer1;
+		delete videoContainer2;
+		delete vignetteFilter;
+		delete filter;
+		delete videoEncoder;
+		delete videoCodec;
+		delete muxer;
 	}
-	catch (FFmpegException e)
+	catch (const FFmpegException& e)
 	{
 		cerr << "Exception caught!" << endl;
 		cerr << e.what() << endl;
-		throw e;
+		throw;
 	}
 
 	cout << "Encoding complete!" << endl;
-	cout << "Press any key to continue..." << endl;
-
-	getchar();
+	return 0;
 }

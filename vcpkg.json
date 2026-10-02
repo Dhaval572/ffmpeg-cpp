@@ -1,0 +1,12 @@
+{
+  "name": "ffmpeg-cpp",
+  "version": "1.0.0",
+  "description": "A clean C++ wrapper around the FFmpeg libraries",
+  "homepage": "https://github.com/RavelPeters/ffmpeg-cpp",
+  "license": "LGPL-2.1-or-later",
+  "supports": "!uwp",
+  "builtin-baseline": "e99d87dcf02926bfd629560e11e156329d5720c1",
+  "dependencies": [
+    "catch2"
+  ]
+}

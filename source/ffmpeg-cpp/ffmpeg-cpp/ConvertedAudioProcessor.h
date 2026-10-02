@@ -9,7 +9,7 @@ namespace ffmpegcpp
 	public:
 
 		virtual void WriteConvertedFrame(AVFrame* convertedFrame) = 0;
+
+		virtual ~ConvertedAudioProcessor() {}
 	};
-
 }
-

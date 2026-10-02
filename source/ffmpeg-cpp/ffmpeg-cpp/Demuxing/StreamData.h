@@ -6,9 +6,9 @@ namespace ffmpegcpp
 {
 	struct StreamData
 	{
-		AVMediaType type;
+		AVMediaType type = AVMEDIA_TYPE_UNKNOWN;
 
-		AVRational timeBase;
-		AVRational frameRate;
+		AVRational timeBase = {0, 1};
+		AVRational frameRate = {0, 1};
 	};
 }

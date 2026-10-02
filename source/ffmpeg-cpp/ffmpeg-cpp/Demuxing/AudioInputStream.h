@@ -2,7 +2,7 @@
 
 #include "ffmpeg.h"
 #include "InputStream.h"
-#include "Frame Sinks/AudioFrameSink.h"
+#include "FrameSinks/AudioFrameSink.h"
 
 namespace ffmpegcpp
 {
@@ -12,12 +12,12 @@ namespace ffmpegcpp
 	public:
 
 		AudioInputStream(AVFormatContext* format, AVStream* stream);
-		~AudioInputStream();
+		~AudioInputStream() override;
 
-		void AddStreamInfo(ContainerInfo* info);
+		void AddStreamInfo(ContainerInfo* info) override;
 
 	protected:
 
-		virtual void ConfigureCodecContext();
+		void ConfigureCodecContext() override;
 	};
 }

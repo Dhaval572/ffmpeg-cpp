@@ -1,7 +1,9 @@
 #pragma once
 
 #include "ffmpeg.h"
-#include "ConvertedAudioProcessor.h"
+#include "FfmpegDeleters.h"
+
+#include <memory>
 
 namespace ffmpegcpp
 {
@@ -9,27 +11,20 @@ namespace ffmpegcpp
 	{
 	public:
 
-		VideoFormatConverter(AVCodecContext* codecContext);
+		explicit VideoFormatConverter(AVCodecContext* codecContext);
 		~VideoFormatConverter();
 
 		AVFrame* ConvertFrame(AVFrame* frame);
 
-
-
 	private:
 
-		void CleanUp();
-
 		void InitDelayed(AVFrame* frame);
-
 
 		AVCodecContext* codecContext;
 
 		bool initialized = false;
 
-		AVFrame* converted_frame = nullptr;
-		struct SwsContext* swsContext = nullptr;
+		FramePtr converted_frame;
+		SwsContextPtr swsContext;
 	};
-
-
 }

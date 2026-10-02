@@ -1,23 +1,23 @@
 #include "GeneratedAudioSource.h"
 
-GeneratedAudioSource::GeneratedAudioSource(FrameSink* frameSink)
+#include <cmath>
+#include <cstdlib>
+
+GeneratedAudioSource::GeneratedAudioSource(ffmpegcpp::FrameSink* frameSink)
 {
 	this->sampleRate = 44100;
 	this->channels = 2;
 	this->format = AV_SAMPLE_FMT_S16;
 
-	// generate a raw video source that will convert the raw format to any other format and pass it on to the encoder
-	// or any other sink (might be a filter as well).
-	output = new RawAudioDataSource(format, this->sampleRate, this->channels, frameSink);
+	output = new ffmpegcpp::RawAudioDataSource(format, this->sampleRate, this->channels, frameSink);
 
 	samples = new uint16_t[channels * 2 * sampleCount];
-
 }
 
 GeneratedAudioSource::~GeneratedAudioSource()
 {
 	delete output;
-	delete samples;
+	delete[] samples;
 }
 
 void GeneratedAudioSource::PreparePipeline()
@@ -35,14 +35,10 @@ bool GeneratedAudioSource::IsDone()
 
 void GeneratedAudioSource::Step()
 {
-	/* encode a single tone sound */
 	float t = 0.0f;
-	float tincr = 2 * M_PI * 440.0 / sampleRate;
+	float tincr = 2 * (float)M_PI * 440.0f / sampleRate;
 	for (int i = 0; i < 120; i++)
 	{
-		/* make sure the frame is writable -- makes a copy if the encoder
-		 * kept a reference internally */
-
 		for (int j = 0; j < sampleCount; j++)
 		{
 			samples[2 * j] = (int)(sin(t) * 10000);
@@ -52,7 +48,6 @@ void GeneratedAudioSource::Step()
 			t += tincr;
 		}
 
-		// submit to the sink
 		output->WriteData(samples, sampleCount);
 		++frameNumber;
 	}

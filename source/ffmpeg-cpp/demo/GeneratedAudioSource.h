@@ -2,18 +2,16 @@
 
 #include "ffmpegcpp.h"
 
-using namespace ffmpegcpp;
-
-class GeneratedAudioSource : public InputSource
+class GeneratedAudioSource : public ffmpegcpp::InputSource
 {
 public:
 
-	GeneratedAudioSource(FrameSink* frameSink);
-	~GeneratedAudioSource();
+	explicit GeneratedAudioSource(ffmpegcpp::FrameSink* frameSink);
+	~GeneratedAudioSource() override;
 
-	virtual void PreparePipeline();
-	virtual bool IsDone();
-	virtual void Step();
+	void PreparePipeline() override;
+	bool IsDone() override;
+	void Step() override;
 
 private:
 
@@ -21,7 +19,7 @@ private:
 	int channels;
 	AVSampleFormat format;
 
-	RawAudioDataSource* output;
+	ffmpegcpp::RawAudioDataSource* output;
 
 	int sampleCount = 735;
 
@@ -29,4 +27,3 @@ private:
 
 	int frameNumber = 0;
 };
-

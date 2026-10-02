@@ -10,49 +10,54 @@ class RawAudioFileSink : public AudioFrameSink, public FrameWriter
 {
 public:
 
-	RawAudioFileSink(const char* fileName)
+	explicit RawAudioFileSink(const char* fileName)
 	{
 		file = fopen(fileName, "wb");
 	}
 
-	FrameSinkStream* CreateStream()
+	~RawAudioFileSink() override
+	{
+		if (file) fclose(file);
+	}
+
+	FrameSinkStream* CreateStream() override
 	{
 		stream = new FrameSinkStream(this, 0);
 		return stream;
 	}
 
-	virtual void WriteFrame(int streamIndex, AVFrame* frame, StreamData* streamData)
+	void WriteFrame(int streamIndex, AVFrame* frame, StreamData* streamData) override
 	{
 		// Just write out the samples channel by channel to a file.
 		int data_size = av_get_bytes_per_sample((AVSampleFormat)frame->format);
 		for (int i = 0; i < frame->nb_samples; i++)
 		{
-			for (int ch = 0; ch < frame->channels; ch++)
+			for (int ch = 0; ch < frame->ch_layout.nb_channels; ch++)
 			{
-				fwrite(frame->data[ch] + data_size * i, 1, data_size, file);
+				fwrite(frame->extended_data[ch] + data_size * i, 1, data_size, file);
 			}
 		}
 	}
 
-	virtual void Close(int streamIndex)
+	void Close(int streamIndex) override
 	{
-		fclose(file);
+		if (file)
+		{
+			fclose(file);
+			file = nullptr;
+		}
 		delete stream;
+		stream = nullptr;
 	}
 
-	virtual bool IsPrimed()
+	bool IsPrimed() override
 	{
-		// Return whether we have all information we need to start writing out data.
-		// Since we don't really need any data in this use case, we are always ready.
-		// A container might only be primed once it received at least one frame from each source
-		// it will be muxing together (see Muxer.cpp for how this would work then).
 		return true;
 	}
 
 private:
-	FILE* file;
-	FrameSinkStream* stream;
-
+	FILE* file = nullptr;
+	FrameSinkStream* stream = nullptr;
 };
 
 int main()
@@ -82,15 +87,13 @@ int main()
 		delete demuxer;
 		delete fileSink;
 	}
-	catch (FFmpegException e)
+	catch (const FFmpegException& e)
 	{
 		cerr << "Exception caught!" << endl;
 		cerr << e.what() << endl;
-		throw e;
+		throw;
 	}
 
 	cout << "Decoding complete!" << endl;
-	cout << "Press any key to continue..." << endl;
-
-	getchar();
+	return 0;
 }

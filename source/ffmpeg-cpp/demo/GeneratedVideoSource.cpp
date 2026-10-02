@@ -1,19 +1,19 @@
 #include "GeneratedVideoSource.h"
 
-GeneratedVideoSource::GeneratedVideoSource(int width, int height, FrameSink* frameSink)
+#include <cstdlib>
+
+GeneratedVideoSource::GeneratedVideoSource(int width, int height, ffmpegcpp::FrameSink* frameSink)
 {
-	// generate a raw video source that will convert the raw format to any other format and pass it on to the encoder
-	// or any other sink (might be a filter as well).
-	output = new RawVideoDataSource(width, height, AV_PIX_FMT_RGBA, AV_PIX_FMT_RGBA, 30, frameSink);
+	output = new ffmpegcpp::RawVideoDataSource(width, height, AV_PIX_FMT_RGBA, AV_PIX_FMT_RGBA, 30, frameSink);
 }
 
 GeneratedVideoSource::~GeneratedVideoSource()
 {
 	delete output;
-	delete rgb;
+	free(rgb);
 }
 
-uint8_t* generate_rgb(int width, int height, int pts, uint8_t *rgb);
+uint8_t* generate_rgb(int width, int height, int pts, uint8_t* rgb);
 
 void GeneratedVideoSource::PreparePipeline()
 {
@@ -40,7 +40,7 @@ bool GeneratedVideoSource::IsDone()
 	return frameNumber >= 100;
 }
 
-uint8_t* generate_rgb(int width, int height, int pts, uint8_t *rgb)
+uint8_t* generate_rgb(int width, int height, int pts, uint8_t* rgb)
 {
 	int x, y, cur;
 	rgb = (uint8_t*)realloc(rgb, 4 * sizeof(uint8_t) * height * width);
@@ -111,4 +111,3 @@ uint8_t* generate_rgb(int width, int height, int pts, uint8_t *rgb)
 	}
 	return rgb;
 }
-

@@ -2,11 +2,9 @@
 
 namespace ffmpegcpp
 {
-
 	VP9Codec::VP9Codec()
 		: VideoCodec("libvpx-vp9")
 	{
-
 	}
 
 	void VP9Codec::SetDeadline(const char* deadline)
@@ -28,6 +26,4 @@ namespace ffmpegcpp
 	{
 		SetOption("crf", crf);
 	}
-
-
 }

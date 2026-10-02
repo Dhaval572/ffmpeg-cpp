@@ -1,12 +1,14 @@
 #pragma once
 
 #include "ffmpeg.h"
-#include "Frame Sinks/AudioFrameSink.h"
+#include "FfmpegDeleters.h"
+#include "FrameSinks/AudioFrameSink.h"
+#include "Demuxing/StreamData.h"
+
+#include <memory>
 
 namespace ffmpegcpp
 {
-	// RawVideoDataSource is used to feed raw memory to the system and process it.
-	// You can use this if the video data comes from another source than the file system (ie rendering).
 	class RawAudioDataSource
 	{
 
@@ -14,7 +16,7 @@ namespace ffmpegcpp
 
 		RawAudioDataSource(AVSampleFormat sampleFormat, int sampleRate, int channels, FrameSink* output);
 		RawAudioDataSource(AVSampleFormat sampleFormat, int sampleRate, int channels, int64_t channelLayout, FrameSink* output);
-		virtual ~RawAudioDataSource();
+		~RawAudioDataSource();
 
 		void WriteData(void* data, int sampleCount);
 		void Close();
@@ -27,8 +29,8 @@ namespace ffmpegcpp
 
 		FrameSinkStream* output;
 
-		AVFrame* frame = nullptr;
+		FramePtr frame;
 
-		StreamData* metaData = nullptr;
+		std::unique_ptr<StreamData> metaData;
 	};
 }

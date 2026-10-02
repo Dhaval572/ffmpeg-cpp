@@ -6,15 +6,15 @@ namespace ffmpegcpp
 {
 	struct VideoStreamInfo
 	{
-		int id;
-		AVRational frameRate;
-		AVRational timeBase;
-		const AVCodec* codec;
-		float bitRate;
+		int id = 0;
+		AVRational frameRate = {0, 1};
+		AVRational timeBase = {0, 1};
+		const AVCodec* codec = nullptr;
+		float bitRate = 0;
 
-		AVPixelFormat format;
-		const char* formatName;
+		AVPixelFormat format = AV_PIX_FMT_NONE;
+		const char* formatName = nullptr;
 
-		int width, height;
+		int width = 0, height = 0;
 	};
 }

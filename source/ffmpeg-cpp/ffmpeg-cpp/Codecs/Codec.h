@@ -2,6 +2,7 @@
 
 #include "ffmpeg.h"
 #include "std.h"
+#include "FfmpegDeleters.h"
 
 #include "OpenCodec.h"
 
@@ -30,11 +31,13 @@ namespace ffmpegcpp
 
 		OpenCodec* Open();
 
+		const AVCodec* GetCodec() const { return codecContext ? codecContext->codec : nullptr; }
+
 	private:
 
-		void CleanUp();
+		CodecContextPtr codecContextOwner;
 
-		AVCodecContext* LoadContext(AVCodec* codec);
+		AVCodecContext* LoadContext(const AVCodec* codec);
 
 		bool opened = false;
 	};

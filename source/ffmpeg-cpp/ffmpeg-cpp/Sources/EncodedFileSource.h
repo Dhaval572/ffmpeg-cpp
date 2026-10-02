@@ -1,52 +1,50 @@
 #pragma once
 
 #include "ffmpeg.h"
-#include "Frame Sinks/FrameSink.h"
+#include "FfmpegDeleters.h"
+#include "FrameSinks/FrameSink.h"
+#include "Demuxing/StreamData.h"
 #include "InputSource.h"
+
+#include <memory>
 
 namespace ffmpegcpp
 {
-	// EncodedFileSource takes a file that is already encoded but not in a container (ie .mp3, .h264)
-	// and feeds it to the system.
 	class EncodedFileSource : public InputSource
 	{
 
 	public:
 		EncodedFileSource(const char* inFileName, AVCodecID codecId, FrameSink* output);
 		EncodedFileSource(const char* inFileName, const char* codecName, FrameSink* output);
-		virtual ~EncodedFileSource();
+		~EncodedFileSource() override;
 
-		virtual void PreparePipeline();
-		virtual bool IsDone();
-		virtual void Step();
+		void PreparePipeline() override;
+		bool IsDone() override;
+		void Step() override;
 
 	private:
 
-		void CleanUp();
-
 		bool done = false;
 
-		FrameSinkStream* output;
-		
-		AVCodecParserContext* parser = nullptr;
+		FrameSinkStream* output = nullptr;
 
-		AVCodec* codec;
-		AVCodecContext* codecContext = nullptr;
+		ParserContextPtr parser;
 
-		int bufferSize;
+		const AVCodec* codec = nullptr;
+		CodecContextPtr codecContext;
 
-		AVFrame* decoded_frame = nullptr;
-		AVPacket* pkt = nullptr;
-		uint8_t* buffer = nullptr;
+		int bufferSize = 0;
 
-		FILE* file;
+		FramePtr decoded_frame;
+		PacketPtr pkt;
+		std::unique_ptr<uint8_t[]> buffer;
 
-		void Init(const char* inFileName, AVCodec* codec, FrameSink* output);
+		FilePtr file;
 
-		void Decode(AVPacket *packet, AVFrame* targetFrame);
+		void Init(const char* inFileName, const AVCodec* codec, FrameSink* output);
 
-		AVRational timeBaseCorrectedByTicksPerFrame;
+		void Decode(AVPacket* packet, AVFrame* targetFrame);
 
-		StreamData* metaData = nullptr;
+		std::unique_ptr<StreamData> metaData;
 	};
 }

@@ -2,7 +2,7 @@
 
 #include "ffmpeg.h"
 #include "std.h"
-
+#include "FfmpegDeleters.h"
 
 namespace ffmpegcpp {
 
@@ -12,35 +12,34 @@ namespace ffmpegcpp {
 	{
 	public:
 
-		Muxer(const char* fileName);
+		explicit Muxer(const char* fileName);
 		~Muxer();
+
+		Muxer(const Muxer&) = delete;
+		Muxer& operator=(const Muxer&) = delete;
 
 		void AddOutputStream(OutputStream* stream);
 
 		void WritePacket(AVPacket* pkt);
 
 		void Close();
-		
+
 		bool IsPrimed();
 
-		AVCodec* GetDefaultVideoFormat();
-		AVCodec* GetDefaultAudioFormat();
-
+		const AVCodec* GetDefaultVideoFormat();
+		const AVCodec* GetDefaultAudioFormat();
 
 	private:
 
 		void Open();
-		
+
 		std::vector<OutputStream*> outputStreams;
-		std::vector<AVPacket*> packetQueue;
 
-		AVOutputFormat* containerFormat;
+		const AVOutputFormat* containerFormat;
 
-		AVFormatContext* containerContext = nullptr;
+		FormatOutputContextPtr containerContext;
 
 		std::string fileName;
-
-		void CleanUp();
 
 		bool opened = false;
 	};

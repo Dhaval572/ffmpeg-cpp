@@ -3,9 +3,17 @@
 
 namespace ffmpegcpp
 {
+	static uint64_t DefaultChannelMask(int channels)
+	{
+		AVChannelLayout layout{};
+		av_channel_layout_default(&layout, channels);
+		uint64_t mask = (layout.order == AV_CHANNEL_ORDER_NATIVE) ? layout.u.mask : 0;
+		av_channel_layout_uninit(&layout);
+		return mask;
+	}
 
 	RawAudioDataSource::RawAudioDataSource(AVSampleFormat sampleFormat, int sampleRate, int channels, FrameSink* output)
-		: RawAudioDataSource(sampleFormat, sampleRate, channels, av_get_default_channel_layout(channels), output)
+		: RawAudioDataSource(sampleFormat, sampleRate, channels, (int64_t)DefaultChannelMask(channels), output)
 	{
 	}
 
@@ -13,76 +21,59 @@ namespace ffmpegcpp
 	{
 		this->output = output->CreateStream();
 
-		// create the frame
-		int ret;
-
-		frame = av_frame_alloc();
+		frame.reset(av_frame_alloc());
 		if (!frame)
 		{
-			CleanUp();
 			throw FFmpegException("Could not allocate video frame");
 		}
 
 		frame->format = sampleFormat;
 		frame->sample_rate = sampleRate;
-		frame->channels = channels;
-		frame->channel_layout = channelLayout;
+		if (channelLayout != 0)
+		{
+			av_channel_layout_from_mask(&frame->ch_layout, (uint64_t)channelLayout);
+		}
+		if (frame->ch_layout.nb_channels == 0)
+		{
+			av_channel_layout_default(&frame->ch_layout, channels);
+		}
 		frame->nb_samples = 735;
 
-		// allocate the buffers for the frame data
-		ret = av_frame_get_buffer(frame, 0);
+		int ret = av_frame_get_buffer(frame.get(), 0);
 		if (ret < 0)
 		{
-			CleanUp();
 			throw FFmpegException("Could not allocate the video frame data", ret);
 		}
-
 	}
 
 	RawAudioDataSource::~RawAudioDataSource()
 	{
-		CleanUp();
 	}
 
 	void RawAudioDataSource::CleanUp()
 	{
-		if (frame != nullptr)
-		{
-			av_frame_free(&frame);
-			frame = nullptr;
-		}
-		if (metaData != nullptr)
-		{
-			delete metaData;
-			metaData = nullptr;
-		}
 	}
 
 	void RawAudioDataSource::WriteData(void* data, int sampleCount)
 	{
-		// resize the frame to the input
 		frame->nb_samples = sampleCount;
 
-		int ret = av_frame_make_writable(frame);
+		int ret = av_frame_make_writable(frame.get());
 		if (ret < 0)
 		{
 			throw FFmpegException("Failed to make audio frame writable", ret);
 		}
 
-		// copy the data to the frame buffer
 		int bytesPerSample = av_get_bytes_per_sample((AVSampleFormat)frame->format);
-		memcpy(*frame->data, data, frame->nb_samples * frame->channels * bytesPerSample);
+		memcpy(*frame->data, data, frame->nb_samples * frame->ch_layout.nb_channels * bytesPerSample);
 
-		// fill in the meta data
 		if (metaData == nullptr)
 		{
-			metaData = new StreamData();
+			metaData = std::make_unique<StreamData>();
 			metaData->type = AVMEDIA_TYPE_AUDIO;
 		}
 
-		// pass on to the sink
-		// we don't have a time_base so we pass NULL and hope that it gets handled later...
-		output->WriteFrame(frame, metaData);
+		output->WriteFrame(frame.get(), metaData.get());
 	}
 
 	void RawAudioDataSource::Close()

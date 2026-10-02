@@ -1,8 +1,6 @@
 #include "AudioCodec.h"
 #include "FFmpegException.h"
 
-using namespace std;
-
 namespace ffmpegcpp
 {
 	AudioCodec::AudioCodec(const char* codecName)
@@ -19,71 +17,79 @@ namespace ffmpegcpp
 	{
 	}
 
-	/* check that a given sample format is supported by the encoder */
-	static int check_sample_fmt(const AVCodec *codec, enum AVSampleFormat sample_fmt)
+	static bool check_sample_fmt(const AVCodec* codec, enum AVSampleFormat sample_fmt)
 	{
-		const enum AVSampleFormat *p = codec->sample_fmts;
+		const enum AVSampleFormat* p = nullptr;
+		int nb = 0;
+		if (avcodec_get_supported_config(nullptr, codec, AV_CODEC_CONFIG_SAMPLE_FORMAT, 0, (const void**)&p, &nb) < 0 || !p)
+			return false;
 
 		while (*p != AV_SAMPLE_FMT_NONE)
 		{
-			if (*p == sample_fmt)
-				return 1;
+			if (*p == sample_fmt) return true;
 			p++;
 		}
-		return 0;
+		return false;
 	}
 
-	// calculate the best sample rate for a codec, defaults to 44100
-	static int select_sample_rate(const AVCodec *codec)
+	static int select_sample_rate(const AVCodec* codec)
 	{
-		const int *p;
-		int best_samplerate = 0;
-
-		if (!codec->supported_samplerates)
+		const int* p = nullptr;
+		int nb = 0;
+		if (avcodec_get_supported_config(nullptr, codec, AV_CODEC_CONFIG_SAMPLE_RATE, 0, (const void**)&p, &nb) < 0 || !p)
 			return 44100;
 
-		p = codec->supported_samplerates;
+		int best_samplerate = 0;
 		while (*p)
 		{
 			if (!best_samplerate || abs(44100 - *p) < abs(44100 - best_samplerate))
 				best_samplerate = *p;
 			p++;
 		}
-		return best_samplerate;
+		return best_samplerate != 0 ? best_samplerate : 44100;
 	}
 
-	/* select layout with the highest channel count */
-	static uint64_t select_channel_layout(const AVCodec *codec)
+	static AVChannelLayout select_channel_layout(const AVCodec* codec)
 	{
-		const uint64_t *p;
-		uint64_t best_ch_layout = 0;
+		AVChannelLayout best{};
+		av_channel_layout_default(&best, 2);
+
+		const AVChannelLayout* layouts = nullptr;
+		int nb = 0;
+		if (avcodec_get_supported_config(nullptr, codec, AV_CODEC_CONFIG_CHANNEL_LAYOUT, 0, (const void**)&layouts, &nb) < 0 || !layouts)
+			return best;
+
 		int best_nb_channels = 0;
-
-		if (!codec->channel_layouts)
-			return AV_CH_LAYOUT_STEREO;
-
-		p = codec->channel_layouts;
-		while (*p)
+		const AVChannelLayout* p = layouts;
+		while (p->nb_channels)
 		{
-			int nb_channels = av_get_channel_layout_nb_channels(*p);
-
-			if (nb_channels > best_nb_channels)
+			if (p->nb_channels > best_nb_channels)
 			{
-				best_ch_layout = *p;
-				best_nb_channels = nb_channels;
+				best_nb_channels = p->nb_channels;
+				av_channel_layout_copy(&best, p);
 			}
 			p++;
 		}
-		return best_ch_layout;
+		return best;
 	}
 
 	bool AudioCodec::IsChannelsSupported(int channels)
 	{
-		int64_t channelLayout = av_get_default_channel_layout(channels);
-		const uint64_t *p = codecContext->codec->channel_layouts;
-		while (*p)
+		const AVChannelLayout* layouts = nullptr;
+		int nb = 0;
+		const AVCodec* codec = GetCodec();
+		if (avcodec_get_supported_config(nullptr, codec, AV_CODEC_CONFIG_CHANNEL_LAYOUT, 0, (const void**)&layouts, &nb) < 0 || !layouts)
+			return true;
+
+		AVChannelLayout def{};
+		av_channel_layout_default(&def, channels);
+
+		const AVChannelLayout* p = layouts;
+		while (p->nb_channels)
 		{
-			if (channelLayout == *p) return true;
+			if (def.nb_channels == p->nb_channels &&
+				(def.order != AV_CHANNEL_ORDER_NATIVE || p->order != AV_CHANNEL_ORDER_NATIVE || def.u.mask == p->u.mask))
+				return true;
 			p++;
 		}
 		return false;
@@ -91,21 +97,16 @@ namespace ffmpegcpp
 
 	bool AudioCodec::IsFormatSupported(AVSampleFormat format)
 	{
-		const enum AVSampleFormat *p = codecContext->codec->sample_fmts;
-
-		while (*p != AV_SAMPLE_FMT_NONE)
-		{
-			if (*p == format) return true;
-			p++;
-		}
-		return false;
+		return check_sample_fmt(GetCodec(), format);
 	}
 
 	bool AudioCodec::IsSampleRateSupported(int sampleRate)
 	{
-		const int *p;
-		if (!codecContext->codec->supported_samplerates) return true; // all sample rates are fair game
-		p = codecContext->codec->supported_samplerates;
+		const int* p = nullptr;
+		int nb = 0;
+		if (avcodec_get_supported_config(nullptr, GetCodec(), AV_CODEC_CONFIG_SAMPLE_RATE, 0, (const void**)&p, &nb) < 0 || !p)
+			return true;
+
 		while (*p)
 		{
 			if (*p == sampleRate) return true;
@@ -116,40 +117,35 @@ namespace ffmpegcpp
 
 	AVSampleFormat AudioCodec::GetDefaultSampleFormat()
 	{
-		AVSampleFormat format = (codecContext->codec->sample_fmts ? codecContext->codec->sample_fmts[0] : AV_SAMPLE_FMT_FLTP);
-		return format;
+		const enum AVSampleFormat* p = nullptr;
+		int nb = 0;
+		if (avcodec_get_supported_config(nullptr, GetCodec(), AV_CODEC_CONFIG_SAMPLE_FORMAT, 0, (const void**)&p, &nb) < 0 || !p || *p == AV_SAMPLE_FMT_NONE)
+			return AV_SAMPLE_FMT_FLTP;
+		return *p;
 	}
 
 	int AudioCodec::GetDefaultSampleRate()
 	{
-		return select_sample_rate(codecContext->codec);
+		return select_sample_rate(GetCodec());
 	}
 
 	OpenCodec* AudioCodec::Open(int bitRate, AVSampleFormat format, int sampleRate)
 	{
+		if (!IsFormatSupported(format)) throw FFmpegException("Sample format " + std::string(av_get_sample_fmt_name(format)) + " is not supported by codec " + GetCodec()->name);
+		if (!IsSampleRateSupported(sampleRate)) throw FFmpegException("Sample rate " + std::to_string(sampleRate) + " is not supported by codec " + GetCodec()->name);
 
-		// do some sanity checks
-		if (!IsFormatSupported(format)) throw FFmpegException("Sample format " + string(av_get_sample_fmt_name(format)) + " is not supported by codec " + codecContext->codec->name);
-		if (!IsSampleRateSupported(sampleRate)) throw FFmpegException("Sample rate " + to_string(sampleRate) + " is not supported by codec " + codecContext->codec->name);
+		if (GetCodec()->type != AVMEDIA_TYPE_AUDIO) throw FFmpegException("An audio output stream must be initialized with an audio codec");
 
-		// if the codec is not an audio codec, we are doing it wrong!
-		if (codecContext->codec->type != AVMEDIA_TYPE_AUDIO) throw FFmpegException("An audio output stream must be initialized with an audio codec");
-
-		// set all data
 		codecContext->bit_rate = bitRate;
 		codecContext->sample_fmt = format;
 		codecContext->sample_rate = sampleRate;
 
-		// deduce the best channel layout from the codec
-		codecContext->channel_layout = select_channel_layout(codecContext->codec);
+		AVChannelLayout layout = select_channel_layout(GetCodec());
+		av_channel_layout_copy(&codecContext->ch_layout, &layout);
+		av_channel_layout_uninit(&layout);
 
-		// finally the number of channels is derived from the layout
-		codecContext->channels = av_get_channel_layout_nb_channels(codecContext->channel_layout);
-
-		// default flags
 		codecContext->flags = 0;
 
-		// open
 		return Codec::Open();
 	}
 }

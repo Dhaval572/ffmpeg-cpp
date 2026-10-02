@@ -1,7 +1,10 @@
 #pragma once
 
 #include "ffmpeg.h"
+#include "FfmpegDeleters.h"
 #include "ConvertedAudioProcessor.h"
+
+#include <memory>
 
 namespace ffmpegcpp
 {
@@ -14,11 +17,7 @@ namespace ffmpegcpp
 
 		void ProcessFrame(AVFrame* frame);
 
-
-
 	private:
-
-		void CleanUp();
 
 		void InitDelayed(AVFrame* frame);
 
@@ -30,20 +29,16 @@ namespace ffmpegcpp
 		ConvertedAudioProcessor* output;
 
 		AVCodecContext* codecContext;
-		
+
 		bool initialized = false;
 
-		AVAudioFifo* fifo = nullptr;
-		AVFrame* tmp_frame = nullptr;
-		AVFrame* converted_frame = nullptr;
-		struct SwrContext* swr_ctx = nullptr;
+		AudioFifoPtr fifo;
+		FramePtr tmp_frame;
+		FramePtr converted_frame;
+		SwrContextPtr swr_ctx;
 
-		int in_sample_rate, out_sample_rate;
+		int in_sample_rate = 0, out_sample_rate = 0;
 
 		int samples_count = 0;
-
-		int samplesInCurrentFrame = 0;
 	};
-
-
 }

@@ -1,8 +1,6 @@
 #include "OutputStream.h"
 #include "FFmpegException.h"
 
-using namespace std;
-
 namespace ffmpegcpp
 {
 	OutputStream::OutputStream(Muxer* muxer, Codec* codec)
@@ -11,20 +9,24 @@ namespace ffmpegcpp
 		this->codec = codec;
 	}
 
+	OutputStream::~OutputStream()
+	{
+		for (size_t i = 0; i < packetQueue.size(); ++i)
+		{
+			av_packet_free(&packetQueue[i]);
+		}
+		packetQueue.clear();
+	}
+
 	void OutputStream::SendPacketToMuxer(AVPacket* pkt)
 	{
-		// if the muxer is primed, we submit the packet for real
 		if (muxer->IsPrimed())
 		{
-			// drain the queue
 			DrainPacketQueue();
 
-			// send this packet
 			PreparePacketForMuxer(pkt);
 			muxer->WritePacket(pkt);
 		}
-
-		// otherwise, we queue the packet
 		else
 		{
 			AVPacket* tmp_pkt = av_packet_alloc();
@@ -39,16 +41,14 @@ namespace ffmpegcpp
 
 	void OutputStream::DrainPacketQueue()
 	{
-		if (packetQueue.size() > 0) printf("Drain %d packets from the packet queue...", packetQueue.size());
-		for (int i = 0; i < packetQueue.size(); ++i)
+		if (packetQueue.size() > 0) printf("Drain %d packets from the packet queue...", (int)packetQueue.size());
+		for (size_t i = 0; i < packetQueue.size(); ++i)
 		{
 			AVPacket* tmp_pkt = packetQueue[i];
 
-			// Write the compressed frame to the media file
 			PreparePacketForMuxer(tmp_pkt);
 			muxer->WritePacket(tmp_pkt);
 
-			// Release the packet
 			av_packet_unref(tmp_pkt);
 			av_packet_free(&tmp_pkt);
 		}

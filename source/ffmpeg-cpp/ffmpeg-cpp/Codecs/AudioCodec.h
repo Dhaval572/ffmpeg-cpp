@@ -12,7 +12,7 @@ namespace ffmpegcpp
 
 		AudioCodec(const char* codecName);
 		AudioCodec(AVCodecID codecId);
-		virtual ~AudioCodec();
+		~AudioCodec() override;
 
 		OpenCodec* Open(int bitRate, AVSampleFormat format, int sampleRate);
 
@@ -22,8 +22,5 @@ namespace ffmpegcpp
 
 		AVSampleFormat GetDefaultSampleFormat();
 		int GetDefaultSampleRate();
-
 	};
-
-
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ffmpeg.h"
+#include "FfmpegDeleters.h"
 
 namespace ffmpegcpp
 {
@@ -16,9 +17,7 @@ namespace ffmpegcpp
 
 	private:
 
-		AVFrame* frame;
-		AVRational *timeBase;
+		FramePtr frame;
+		AVRational* timeBase;
 	};
-
 }
-

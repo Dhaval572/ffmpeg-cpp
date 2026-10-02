@@ -36,19 +36,22 @@ int main()
 		{
 			audioFile->Step();
 		}
-		
+
 		// Save everything to disk by closing the muxer.
 		muxer->Close();
+
+		delete audioFile;
+		delete encoder;
+		delete codec;
+		delete muxer;
 	}
-	catch (FFmpegException e)
+	catch (const FFmpegException& e)
 	{
 		cerr << "Exception caught!" << endl;
 		cerr << e.what() << endl;
-		throw e;
+		throw;
 	}
 
 	cout << "Encoding complete!" << endl;
-	cout << "Press any key to continue..." << endl;
-
-	getchar();
+	return 0;
 }

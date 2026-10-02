@@ -12,11 +12,10 @@ namespace ffmpegcpp
 
 		VideoCodec(const char* codecName);
 		VideoCodec(AVCodecID codecId);
-		virtual ~VideoCodec();
+		~VideoCodec() override;
 
 		OpenCodec* Open(int width, int height, AVRational* frameRate, AVPixelFormat format);
 
-		// This maps to the qscale parameter so should be in the range [0,31].
 		void SetQualityScale(int qscale);
 
 		bool IsPixelFormatSupported(AVPixelFormat format);
@@ -24,8 +23,5 @@ namespace ffmpegcpp
 
 		AVPixelFormat GetDefaultPixelFormat();
 		AVRational GetClosestSupportedFrameRate(AVRational frameRate);
-
 	};
-
-
 }

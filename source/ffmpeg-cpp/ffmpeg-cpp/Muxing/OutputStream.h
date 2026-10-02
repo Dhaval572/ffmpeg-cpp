@@ -4,6 +4,8 @@
 #include "Codecs/Codec.h"
 #include "Muxer.h"
 
+#include <vector>
+
 namespace ffmpegcpp
 {
 	class OutputStream
@@ -11,6 +13,7 @@ namespace ffmpegcpp
 	public:
 
 		OutputStream(Muxer* muxer, Codec* codec);
+		virtual ~OutputStream();
 
 		virtual void OpenStream(AVStream* stream, int containerFlags) = 0;
 
@@ -25,7 +28,6 @@ namespace ffmpegcpp
 		virtual void PreparePacketForMuxer(AVPacket* packet) = 0;
 
 		void SendPacketToMuxer(AVPacket* packet);
-
 
 		Codec* codec;
 

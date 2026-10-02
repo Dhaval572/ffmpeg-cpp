@@ -13,6 +13,4 @@ namespace ffmpegcpp
 
 		void SetCompressionLevel(int compressionLevel);
 	};
-
-
 }

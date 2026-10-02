@@ -1,4 +1,6 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
+#ifdef _WIN32
+
 #include <windows.h>
 
 BOOL APIENTRY DllMain(HMODULE hModule,
@@ -6,6 +8,9 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	LPVOID lpReserved
 )
 {
+	UNREFERENCED_PARAMETER(hModule);
+	UNREFERENCED_PARAMETER(lpReserved);
+
 	switch (ul_reason_for_call)
 	{
 	case DLL_PROCESS_ATTACH:
@@ -17,3 +22,4 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 	return TRUE;
 }
 
+#endif // _WIN32

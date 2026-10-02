@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ffmpeg.h"
+#include "FfmpegDeleters.h"
 
 namespace ffmpegcpp
 {
@@ -8,15 +9,16 @@ namespace ffmpegcpp
 	{
 	public:
 
-		OpenCodec(AVCodecContext* openCodecContext);
+		explicit OpenCodec(CodecContextPtr openCodecContext);
 		~OpenCodec();
+
+		OpenCodec(const OpenCodec&) = delete;
+		OpenCodec& operator=(const OpenCodec&) = delete;
 
 		AVCodecContext* GetContext();
 
 	private:
 
-		AVCodecContext* context;
+		CodecContextPtr context;
 	};
-
-
 }

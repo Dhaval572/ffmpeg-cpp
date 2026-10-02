@@ -24,21 +24,6 @@ int main()
 		// Create a video filter and do some funny stuff with the video data.
 		Filter* filter = new Filter("areverse", encoder);
 
-		// THIS COMMENTED EXAMPLE BELOW SHOWS A FILTER FROM AUDIO TO PNG
-		// It will render the waveform of the audio.
-
-		// Create a muxer that will output as PNG.
-		/*Muxer* muxer = new Muxer("Vivaldi_waveform.png");
-
-		// Create a MPEG2 codec that will encode the raw data.
-		VideoCodec* codec = new PNGCodec();
-
-		// Create an encoder that will encode the raw audio data as MP3.
-		// Tie it to the muxer so it will be written to the file.
-		VideoEncoder* encoder = new VideoEncoder(codec, muxer);
-
-		Filter* filter = new Filter("showwavespic=colors=white:s=512x64", encoder); */
-
 		// Load a video from a container and send it to the filter first.
 		Demuxer* demuxer = new Demuxer("samples/Vivaldi_Sonata_eminor_.mp3");
 		demuxer->DecodeBestAudioStream(filter);
@@ -51,19 +36,23 @@ int main()
 		{
 			demuxer->Step();
 		}
-		
+
 		// Save everything to disk by closing the muxer.
 		muxer->Close();
+
+		delete demuxer;
+		delete filter;
+		delete encoder;
+		delete codec;
+		delete muxer;
 	}
-	catch (FFmpegException e)
+	catch (const FFmpegException& e)
 	{
 		cerr << "Exception caught!" << endl;
 		cerr << e.what() << endl;
-		throw e;
+		throw;
 	}
 
 	cout << "Encoding complete!" << endl;
-	cout << "Press any key to continue..." << endl;
-
-	getchar();
+	return 0;
 }

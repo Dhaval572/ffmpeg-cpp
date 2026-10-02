@@ -1,10 +1,12 @@
 #pragma once
 
 #include "ffmpeg.h"
+#include "FfmpegDeleters.h"
 
 #include "InputSource.h"
 #include "Demuxer.h"
 
+#include <memory>
 
 namespace ffmpegcpp
 {
@@ -13,18 +15,14 @@ namespace ffmpegcpp
 	public:
 
 		RawAudioFileSource(const char* fileName, const char* inputFormat, int sampleRate, int channels, FrameSink* frameSink);
-		virtual ~RawAudioFileSource();
+		~RawAudioFileSource() override;
 
-		virtual void PreparePipeline();
-		virtual bool IsDone();
-		virtual void Step();
+		void PreparePipeline() override;
+		bool IsDone() override;
+		void Step() override;
 
 	private:
 
-		void CleanUp();
-
-		Demuxer* demuxer = nullptr;
+		std::unique_ptr<Demuxer> demuxer;
 	};
-
-
 }

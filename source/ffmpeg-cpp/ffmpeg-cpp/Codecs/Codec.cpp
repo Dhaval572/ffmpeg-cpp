@@ -2,21 +2,17 @@
 #include "FFmpegException.h"
 #include "CodecDeducer.h"
 
-using namespace std;
-
 namespace ffmpegcpp
 {
 	Codec::Codec(const char* codecName)
 	{
-		
-		AVCodec* codec = CodecDeducer::DeduceEncoder(codecName);
+		const AVCodec* codec = CodecDeducer::DeduceEncoder(codecName);
 		codecContext = LoadContext(codec);
 	}
 
-
 	Codec::Codec(AVCodecID codecId)
 	{
-		AVCodec* codec = CodecDeducer::DeduceEncoder(codecId);
+		const AVCodec* codec = CodecDeducer::DeduceEncoder(codecId);
 		codecContext = LoadContext(codec);
 	}
 
@@ -40,27 +36,17 @@ namespace ffmpegcpp
 		av_opt_set(codecContext, name, value, 0);
 	}
 
-	AVCodecContext* Codec::LoadContext(AVCodec* codec)
+	AVCodecContext* Codec::LoadContext(const AVCodec* codec)
 	{
-		AVCodecContext* codecContext = avcodec_alloc_context3(codec);
-		if (!codecContext)
+		codecContextOwner.reset(avcodec_alloc_context3(codec));
+		if (!codecContextOwner)
 		{
-			CleanUp();
-			throw FFmpegException("Could not allocate video codec context for codec " + string(codec->name));
+			throw FFmpegException("Could not allocate video codec context for codec " + std::string(codec->name));
 		}
 
-		// copy the type
-		codecContext->codec_type = codec->type;
+		codecContextOwner->codec_type = codec->type;
 
-		return codecContext;
-	}
-
-	void Codec::CleanUp()
-	{
-		if (codecContext != nullptr && !opened)
-		{
-			avcodec_free_context(&codecContext);
-		}
+		return codecContextOwner.get();
 	}
 
 	OpenCodec* Codec::Open()
@@ -78,12 +64,11 @@ namespace ffmpegcpp
 
 		opened = true;
 
-		return new OpenCodec(codecContext);
+		return new OpenCodec(std::move(codecContextOwner));
 	}
 
 	Codec::~Codec()
 	{
-		CleanUp();
 	}
 
 	void Codec::SetGlobalContainerHeader()

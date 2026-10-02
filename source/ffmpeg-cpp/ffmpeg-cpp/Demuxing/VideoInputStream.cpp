@@ -15,56 +15,39 @@ namespace ffmpegcpp
 
 	void VideoInputStream::ConfigureCodecContext()
 	{
-
 	}
 
 	void VideoInputStream::AddStreamInfo(ContainerInfo* containerInfo)
 	{
-		VideoStreamInfo info;
+		VideoStreamInfo info{};
 
-		info.id = stream->id; // the layout of the id's depends on the container format - it doesn't always start from 0 or 1!
+		info.id = stream->id;
 
-		AVRational overrideFrameRate;
-		overrideFrameRate.num = 0;
+		info.timeBase = stream->time_base;
+		info.frameRate = av_guess_frame_rate(format, stream, NULL);
 
-		AVRational tb = overrideFrameRate.num ? av_inv_q(overrideFrameRate) : stream->time_base;
-		AVRational fr = overrideFrameRate;
-		if (!fr.num) fr = av_guess_frame_rate(format, stream, NULL);
-
-		StreamData* metaData = new StreamData();
-		info.timeBase = tb;
-		info.frameRate = fr;
-
-		AVCodecContext* codecContext = avcodec_alloc_context3(NULL);
-		if (!codecContext) throw new FFmpegException("Failed to allocate temporary codec context.");
-		int ret = avcodec_parameters_to_context(codecContext, stream->codecpar);
+		AVCodecContext* tmpContext = avcodec_alloc_context3(NULL);
+		if (!tmpContext) throw FFmpegException("Failed to allocate temporary codec context.");
+		int ret = avcodec_parameters_to_context(tmpContext, stream->codecpar);
 		if (ret < 0)
 		{
-			avcodec_free_context(&codecContext);
-			throw new FFmpegException("Failed to read parameters from stream");
+			avcodec_free_context(&tmpContext);
+			throw FFmpegException("Failed to read parameters from stream");
 		}
 
-		codecContext->properties = stream->codec->properties;
-		codecContext->codec = stream->codec->codec;
-		codecContext->qmin = stream->codec->qmin;
-		codecContext->qmax = stream->codec->qmax;
-		codecContext->coded_width = stream->codec->coded_width;
-		codecContext->coded_height = stream->codec->coded_height;
+		info.bitRate = CalculateBitRate(tmpContext);
 
-		info.bitRate = CalculateBitRate(codecContext);
-
-		AVCodec* codec = CodecDeducer::DeduceDecoder(codecContext->codec_id);
+		const AVCodec* codec = CodecDeducer::DeduceDecoder(tmpContext->codec_id);
 		info.codec = codec;
 
-		info.format = codecContext->pix_fmt;
+		info.format = tmpContext->pix_fmt;
 		info.formatName = av_get_pix_fmt_name(info.format);
 
-		info.width = codecContext->width;
-		info.height = codecContext->height;
+		info.width = tmpContext->width;
+		info.height = tmpContext->height;
 
-		avcodec_free_context(&codecContext);
+		avcodec_free_context(&tmpContext);
 
 		containerInfo->videoStreams.push_back(info);
 	}
 }
-

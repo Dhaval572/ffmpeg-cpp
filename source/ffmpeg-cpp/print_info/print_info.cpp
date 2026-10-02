@@ -21,7 +21,7 @@ int main()
 		cout << "Input " << info.format->name << " from '" << fileName << "'" << endl;
 
 		cout << "Video streams:" << endl;
-		for (int i = 0; i < info.videoStreams.size(); ++i)
+		for (size_t i = 0; i < info.videoStreams.size(); ++i)
 		{
 			VideoStreamInfo stream = info.videoStreams[i];
 			cout << "Stream #" << (i + 1)
@@ -30,13 +30,13 @@ int main()
 				<< ", resolution " << stream.width << "x" << stream.height
 				<< ", bit rate " << stream.bitRate << "kb/s"
 				<< ", fps " << ((float)stream.frameRate.num / (float)stream.frameRate.den)
-				<< ", time base " << stream.timeBase.num  << "/" << stream.timeBase.den
+				<< ", time base " << stream.timeBase.num << "/" << stream.timeBase.den
 				<< ", " << demuxer->GetFrameCount(stream.id) << " frames"
 				<< endl;
 		}
 
 		cout << "Audio streams:" << endl;
-		for (int i = 0; i < info.audioStreams.size(); ++i)
+		for (size_t i = 0; i < info.audioStreams.size(); ++i)
 		{
 			AudioStreamInfo stream = info.audioStreams[i];
 			cout << "Stream #" << (i + 1)
@@ -50,18 +50,15 @@ int main()
 				<< endl;
 		}
 
-
-
+		delete demuxer;
 	}
-	catch (FFmpegException e)
+	catch (const FFmpegException& e)
 	{
 		cerr << "Exception caught!" << endl;
 		cerr << e.what() << endl;
-		throw e;
+		throw;
 	}
 
-	cout << "Encoding complete!" << endl;
-	cout << "Press any key to continue..." << endl;
-
-	getchar();
+	cout << "Done!" << endl;
+	return 0;
 }

@@ -17,6 +17,4 @@ namespace ffmpegcpp
 		void SetLossless(bool lossless);
 		void SetCrf(int crf);
 	};
-
-
 }

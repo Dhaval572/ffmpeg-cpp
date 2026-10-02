@@ -11,11 +11,9 @@ namespace ffmpegcpp
 
 	void AudioInputStream::ConfigureCodecContext()
 	{
-
-		// try to guess the channel layout for the decoder
-		if (!codecContext->channel_layout)
+		if (codecContext->ch_layout.nb_channels == 0)
 		{
-			codecContext->channel_layout = av_get_default_channel_layout(codecContext->channels);
+			av_channel_layout_default(&codecContext->ch_layout, 2);
 		}
 	}
 
@@ -25,46 +23,33 @@ namespace ffmpegcpp
 
 	void AudioInputStream::AddStreamInfo(ContainerInfo* containerInfo)
 	{
-		AudioStreamInfo info;
+		AudioStreamInfo info{};
 
-		info.id = stream->id; // the layout of the id's depends on the container format - it doesn't always start from 0 or 1!
+		info.id = stream->id;
 
-		AVRational tb = stream->time_base;
+		info.timeBase = stream->time_base;
 
-		StreamData* metaData = new StreamData();
-		info.timeBase = tb;
-
-		AVCodecContext* codecContext = avcodec_alloc_context3(NULL);
-		if (!codecContext) throw new FFmpegException("Failed to allocate temporary codec context.");
-		int ret = avcodec_parameters_to_context(codecContext, stream->codecpar);
+		AVCodecContext* tmpContext = avcodec_alloc_context3(NULL);
+		if (!tmpContext) throw FFmpegException("Failed to allocate temporary codec context.");
+		int ret = avcodec_parameters_to_context(tmpContext, stream->codecpar);
 		if (ret < 0)
 		{
-			avcodec_free_context(&codecContext);
-			throw new FFmpegException("Failed to read parameters from stream");
+			avcodec_free_context(&tmpContext);
+			throw FFmpegException("Failed to read parameters from stream");
 		}
 
-		codecContext->properties = stream->codec->properties;
-		codecContext->codec = stream->codec->codec;
-		codecContext->qmin = stream->codec->qmin;
-		codecContext->qmax = stream->codec->qmax;
-		codecContext->coded_width = stream->codec->coded_width;
-		codecContext->coded_height = stream->codec->coded_height;
+		info.bitRate = CalculateBitRate(tmpContext);
 
-		info.bitRate = CalculateBitRate(codecContext);
-
-		AVCodec* codec = CodecDeducer::DeduceDecoder(codecContext->codec_id);
+		const AVCodec* codec = CodecDeducer::DeduceDecoder(tmpContext->codec_id);
 		info.codec = codec;
 
-		info.sampleRate = codecContext->sample_rate;
-		info.channels = codecContext->channels;
-		info.channelLayout = codecContext->channel_layout;
-		av_get_channel_layout_string(info.channelLayoutName, 255, codecContext->channels, codecContext->channel_layout);
+		info.sampleRate = tmpContext->sample_rate;
+		info.channels = tmpContext->ch_layout.nb_channels;
+		av_channel_layout_describe(&tmpContext->ch_layout, info.channelLayoutName, sizeof(info.channelLayoutName));
+		info.channelLayout = tmpContext->ch_layout.order == AV_CHANNEL_ORDER_NATIVE ? tmpContext->ch_layout.u.mask : 0;
 
-		avcodec_free_context(&codecContext);
+		avcodec_free_context(&tmpContext);
 
 		containerInfo->audioStreams.push_back(info);
 	}
 }
-
-
-

@@ -20,7 +20,6 @@ void PlayDemo(int argc, char** argv)
 
 	// These are example video and audio sources used below.
 	const char* rawVideoFile = "samples/carphone_qcif.y4m";
-	int rawVideoWidth = 176; int rawVideoHeight = 162;
 	const char* rawAudioFile = "samples/Vivaldi_s16le_2_channels_samplerate_11025.dat";
 	const char* rawAudioFormat = "s16le"; int rawAudioSampleRate = 11025; int rawAudioChannels = 2;
 
@@ -34,7 +33,7 @@ void PlayDemo(int argc, char** argv)
 	string inputAudioSource = "CONTAINER"; // options are RAW, ENCODED, CONTAINER, GENERATED
 	string inputVideoSource = "ENCODED"; // options are RAW, ENCODED, CONTAINER, GENERATED
 	string outputAudioCodec = "NONE"; // options are MP2, AAC, NONE
-	string outputVideoCodec = "H264"; // options are H264, H265, VP9, NONE (H264 and H265 only work on Nvidia hardware)
+	string outputVideoCodec = "VP9"; // options are H264, H265, VP9, NONE
 	string outputContainerName = "out.mp4"; // container format is deduced from extension so use a known one
 
 	// you can use any filter string that you can use in the ffmpeg command-line here
@@ -103,6 +102,7 @@ void PlayDemo(int argc, char** argv)
 
 		// create the output encoder based on our setting above
 		VideoCodec* videoCodec = nullptr;
+#ifdef FFMPEGCPP_WITH_NVENC
 		if (outputVideoCodec == "H264")
 		{
 			printf("Encoding video as H264 on Nvidia GPU...\n");
@@ -117,6 +117,12 @@ void PlayDemo(int argc, char** argv)
 			h265Codec->SetPreset("hq");
 			videoCodec = h265Codec;
 		}
+		else
+#endif
+		if (outputVideoCodec == "H264" || outputVideoCodec == "H265")
+		{
+			printf("NVENC not enabled - use -DFFMPEGCPP_WITH_NVENC=ON to enable hardware encoding.\n");
+		}
 		else if (outputVideoCodec == "VP9")
 		{
 			printf("Encoding video as VP9...\n");
@@ -124,9 +130,14 @@ void PlayDemo(int argc, char** argv)
 			vp9Codec->SetLossless(true);
 			videoCodec = vp9Codec;
 		}
+		else if (outputVideoCodec == "MPEG2")
+		{
+			printf("Encoding video as MPEG2...\n");
+			videoCodec = new VideoCodec(AV_CODEC_ID_MPEG2VIDEO);
+		}
 		else if (outputVideoCodec == "NONE")
 		{
-			// no codec specified - don't output audio!
+			// no codec specified - don't output video!
 		}
 
 		// create an encoder for the codec and tie it to the muxer
@@ -276,21 +287,18 @@ void PlayDemo(int argc, char** argv)
 
 		delete muxer;
 	}
-	catch (FFmpegException e)
+	catch (const FFmpegException& e)
 	{
 		cerr << e.what() << endl;
-		throw e;
+		throw;
 	}
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
 	PlayDemo(argc, argv);
 
 	cout << "Encoding complete!" << endl;
-	cout << "Press any key to continue..." << endl;
-
-	getchar();
 
 	return 0;
 }

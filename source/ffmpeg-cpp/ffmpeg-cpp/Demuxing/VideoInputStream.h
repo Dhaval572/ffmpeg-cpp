@@ -2,7 +2,7 @@
 
 #include "ffmpeg.h"
 #include "InputStream.h"
-#include "Frame Sinks/VideoFrameSink.h"
+#include "FrameSinks/VideoFrameSink.h"
 #include "Info/VideoStreamInfo.h"
 
 namespace ffmpegcpp
@@ -13,13 +13,12 @@ namespace ffmpegcpp
 	public:
 
 		VideoInputStream(AVFormatContext* format, AVStream* stream);
-		~VideoInputStream();
+		~VideoInputStream() override;
 
-		void AddStreamInfo(ContainerInfo* info);
+		void AddStreamInfo(ContainerInfo* info) override;
 
 	protected:
 
-		virtual void ConfigureCodecContext();
-
+		void ConfigureCodecContext() override;
 	};
 }

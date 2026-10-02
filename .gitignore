@@ -1,32 +1,55 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
+﻿# Build directories
+build/
+build-*/
+out/
+cmake-build-*/
 
-/source/ffmpeg-cpp/.vs/ffmpeg-cpp/v15
-/source/ffmpeg-cpp/ffmpeg-cpp/obj
-/source/ffmpeg-cpp/demo/obj
-/source/ffmpeg-cpp/x64/Debug
-/source/ffmpeg-cpp/obj/Debug
-/source/ffmpeg-cpp/demo/samples/out.mp4
+# IDE / editor
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.cache
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+_deps/
+
+# Compiled objects / binaries
+*.o
+*.obj
+*.a
+*.lib
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.pdb
+*.ilk
+*.exp
+
+# Example outputs
+samples/out.mp4
+output.mp4
+output.mpg
+output.mp3
+output.mkv
+filtered_video.mp4
+Vivaldi_filtered.aac
+out.mp4
+rawaudio
+pgm-*.pgm
+
+# FFmpeg prebuilt downloads (legacy)
 /ffmpeg/include
 /ffmpeg/lib
 /ffmpeg/bin
-/bin
-/lib
-
-/source/ffmpeg-cpp/decode_audio/obj
-/source/ffmpeg-cpp/encode_audio/obj
-/source/ffmpeg-cpp/encode_video/obj
-/source/ffmpeg-cpp/decode_video/obj
-/source/ffmpeg-cpp/filtering_video/obj
-/include
-
-/source/ffmpeg-cpp/remuxing/obj
-/source/ffmpeg-cpp/difference/obj/x64/Debug
-/source/ffmpeg-cpp/difference/obj
-/source/ffmpeg-cpp/print_info/obj/x64
-/source/ffmpeg-cpp/filtering_audio/obj/x64
-/source/ffmpeg-cpp/simple_interface/x64/Debug
-/source/ffmpeg-cpp/simple_interface_demo/obj/x64
-/source/ffmpeg-cpp/simple_interface/Debug/simple_interface.tlog
-/source/ffmpeg-cpp/simple_interface/Debug

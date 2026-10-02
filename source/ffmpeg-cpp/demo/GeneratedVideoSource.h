@@ -2,25 +2,24 @@
 
 #include "ffmpegcpp.h"
 
-using namespace ffmpegcpp;
+#include <cstdint>
 
-class GeneratedVideoSource : public InputSource
+class GeneratedVideoSource : public ffmpegcpp::InputSource
 {
 public:
 
-	GeneratedVideoSource(int width, int height, FrameSink* frameSink);
-	~GeneratedVideoSource();
+	GeneratedVideoSource(int width, int height, ffmpegcpp::FrameSink* frameSink);
+	~GeneratedVideoSource() override;
 
-	virtual void PreparePipeline();
-	virtual bool IsDone();
-	virtual void Step();
+	void PreparePipeline() override;
+	bool IsDone() override;
+	void Step() override;
 
 private:
 
-	RawVideoDataSource* output;
+	ffmpegcpp::RawVideoDataSource* output;
 
 	int frameNumber = 0;
 
-	uint8_t *rgb = NULL;
+	uint8_t* rgb = nullptr;
 };
-

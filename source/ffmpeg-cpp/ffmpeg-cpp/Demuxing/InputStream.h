@@ -1,10 +1,12 @@
 #pragma once
 
 #include "ffmpeg.h"
-#include "std.h"
-#include "Frame Sinks/FrameSink.h"
+#include "FfmpegDeleters.h"
+#include "FrameSinks/FrameSink.h"
 #include "Info/ContainerInfo.h"
 #include "Demuxing/StreamData.h"
+
+#include <memory>
 
 namespace ffmpegcpp
 {
@@ -14,7 +16,7 @@ namespace ffmpegcpp
 	public:
 
 		InputStream(AVFormatContext* format, AVStream* stream);
-		~InputStream();
+		virtual ~InputStream();
 
 		void Open(FrameSink* frameSink);
 
@@ -30,7 +32,6 @@ namespace ffmpegcpp
 
 		AVCodecContext* codecContext = nullptr;
 
-
 		virtual void ConfigureCodecContext();
 
 		AVFormatContext* format;
@@ -40,21 +41,14 @@ namespace ffmpegcpp
 
 	private:
 
-		AVRational timeBaseCorrectedByTicksPerFrame;
-
 		FrameSinkStream* output = nullptr;
 
-		AVFrame* frame;
+		FramePtr frame;
 
-		StreamData* metaData = nullptr;
+		std::unique_ptr<StreamData> metaData;
 
 		StreamData* DiscoverMetaData();
 
 		int nFramesProcessed = 0;
-		
-		void CleanUp();
-
 	};
-
-
 }

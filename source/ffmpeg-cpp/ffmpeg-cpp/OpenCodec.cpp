@@ -1,29 +1,23 @@
-#pragma once
-
 #include "OpenCodec.h"
 #include "FFmpegException.h"
 
-using namespace std;
-
 namespace ffmpegcpp
 {
-	OpenCodec::OpenCodec(AVCodecContext* context)
+	OpenCodec::OpenCodec(CodecContextPtr context)
+		: context(std::move(context))
 	{
-		if (!avcodec_is_open(context))
+		if (!avcodec_is_open(this->context.get()))
 		{
-			throw FFmpegException("Codec context for " + string(context->codec->name) + " hasn't been opened yet");
+			throw FFmpegException("Codec context for " + std::string(this->context->codec->name) + " hasn't been opened yet");
 		}
-
-		this->context = context;
 	}
 
 	OpenCodec::~OpenCodec()
 	{
-		avcodec_free_context(&context);
 	}
 
 	AVCodecContext* OpenCodec::GetContext()
 	{
-		return context;
+		return context.get();
 	}
 }

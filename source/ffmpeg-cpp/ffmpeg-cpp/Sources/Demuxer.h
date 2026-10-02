@@ -2,6 +2,7 @@
 
 #include "ffmpeg.h"
 #include "std.h"
+#include "FfmpegDeleters.h"
 
 #include "Demuxing/AudioInputStream.h"
 #include "Demuxing/VideoInputStream.h"
@@ -9,15 +10,18 @@
 #include "Sources/InputSource.h"
 #include "Info/ContainerInfo.h"
 
+#include <memory>
+#include <vector>
+
 namespace ffmpegcpp
 {
 	class Demuxer : public InputSource
 	{
 	public:
 
-		Demuxer(const char* fileName);
-		Demuxer(const char* fileName, AVInputFormat* inputFormat, AVDictionary *inputFormatOptions);
-		~Demuxer();
+		explicit Demuxer(const char* fileName);
+		Demuxer(const char* fileName, const AVInputFormat* inputFormat, AVDictionary* inputFormatOptions);
+		~Demuxer() override;
 
 		void DecodeBestAudioStream(FrameSink* frameSink);
 		void DecodeBestVideoStream(FrameSink* frameSink);
@@ -25,9 +29,9 @@ namespace ffmpegcpp
 		void DecodeAudioStream(int streamId, FrameSink* frameSink);
 		void DecodeVideoStream(int streamId, FrameSink* frameSink);
 
-		virtual void PreparePipeline();
-		virtual bool IsDone();
-		virtual void Step();
+		void PreparePipeline() override;
+		bool IsDone() override;
+		void Step() override;
 
 		ContainerInfo GetInfo();
 		int GetFrameCount(int streamId);
@@ -38,21 +42,16 @@ namespace ffmpegcpp
 
 		bool done = false;
 
-		const char* fileName;
+		std::string fileName;
 
 		InputStream* GetInputStream(int index);
 		InputStream* GetInputStreamById(int streamId);
 
-		//std::vector<StreamInfo> GetStreamInfo(AVMediaType mediaType);
-		//StreamInfo CreateInfo(int streamIndex, AVStream* stream, AVCodec* codec);
+		std::vector<std::unique_ptr<InputStream>> inputStreams;
 
-		InputStream** inputStreams = nullptr;
-
-		AVFormatContext* containerContext = nullptr;
-		AVPacket* pkt = nullptr;
+		FormatContextPtr containerContext;
+		PacketPtr pkt;
 
 		void DecodePacket();
-
-		void CleanUp();
 	};
 }

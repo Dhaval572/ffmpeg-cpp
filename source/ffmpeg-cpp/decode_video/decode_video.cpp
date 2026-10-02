@@ -14,18 +14,21 @@ public:
 	{
 	}
 
-	FrameSinkStream* CreateStream()
+	~PGMFileSink() override
+	{
+	}
+
+	FrameSinkStream* CreateStream() override
 	{
 		stream = new FrameSinkStream(this, 0);
 		return stream;
 	}
 
-	virtual void WriteFrame(int streamIndex, AVFrame* frame, StreamData* streamData)
+	void WriteFrame(int streamIndex, AVFrame* frame, StreamData* streamData) override
 	{
 		++frameNumber;
 		printf("saving frame %3d\n", frameNumber);
 		fflush(stdout);
-
 
 		// write the first channel's color data to a PGM file.
 		// This raw image file can be opened with most image editing programs.
@@ -34,10 +37,10 @@ public:
 			frame->width, frame->height, fileNameBuffer);
 	}
 
-	void pgm_save(unsigned char *buf, int wrap, int xsize, int ysize,
-		char *filename)
+	void pgm_save(unsigned char* buf, int wrap, int xsize, int ysize,
+		char* filename)
 	{
-		FILE *f;
+		FILE* f;
 		int i;
 
 		f = fopen(filename, "w");
@@ -47,25 +50,21 @@ public:
 		fclose(f);
 	}
 
-	virtual void Close(int streamIndex)
+	void Close(int streamIndex) override
 	{
 		delete stream;
+		stream = nullptr;
 	}
 
-	virtual bool IsPrimed()
+	bool IsPrimed() override
 	{
-		// Return whether we have all information we need to start writing out data.
-		// Since we don't really need any data in this use case, we are always ready.
-		// A container might only be primed once it received at least one frame from each source
-		// it will be muxing together (see Muxer.cpp for how this would work then).
 		return true;
 	}
 
 private:
 	char fileNameBuffer[1024];
 	int frameNumber = 0;
-	FrameSinkStream* stream;
-
+	FrameSinkStream* stream = nullptr;
 };
 
 int main()
@@ -95,15 +94,13 @@ int main()
 		delete demuxer;
 		delete fileSink;
 	}
-	catch (FFmpegException e)
+	catch (const FFmpegException& e)
 	{
 		cerr << "Exception caught!" << endl;
 		cerr << e.what() << endl;
-		throw e;
+		throw;
 	}
 
 	cout << "Decoding complete!" << endl;
-	cout << "Press any key to continue..." << endl;
-
-	getchar();
+	return 0;
 }

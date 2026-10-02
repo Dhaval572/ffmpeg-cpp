@@ -1,17 +1,17 @@
 #include "FFmpegException.h"
-
-using namespace std;
+#include "ffmpeg.h"
 
 namespace ffmpegcpp
 {
-	FFmpegException::FFmpegException(string error) : exception(error.c_str())
+	FFmpegException::FFmpegException(std::string error)
+		: message(std::move(error))
 	{
 	}
 
-	FFmpegException::FFmpegException(string error, int returnValue)
-		: exception(
-			(error + ": " + av_make_error_string(this->error, AV_ERROR_MAX_STRING_SIZE, returnValue)).c_str()
-		)
+	FFmpegException::FFmpegException(std::string error, int returnValue)
 	{
+		char errbuf[AV_ERROR_MAX_STRING_SIZE] = {};
+		av_strerror(returnValue, errbuf, sizeof(errbuf));
+		message = error + ": " + errbuf;
 	}
 }
