@@ -7,7 +7,7 @@ Builds on **Windows, Linux, and macOS** using CMake. Requires **FFmpeg 6.0 or ne
 # Quick Start
 
 ```bash
-git clone <this repository>
+git clone <https://github.com/Dhaval572/ffmpeg-cpp.git>
 cd ffmpeg-cpp
 make
 ```
@@ -27,7 +27,7 @@ target_link_libraries(myapp PRIVATE ffmpeg-cpp::ffmpeg-cpp)
 **FetchContent:**
 ```cmake
 include(FetchContent)
-FetchContent_Declare(ffmpeg-cpp GIT_REPOSITORY <this-repo> GIT_TAG main)
+FetchContent_Declare(ffmpeg-cpp GIT_REPOSITORY <https://github.com/Dhaval572/ffmpeg-cpp.git> GIT_TAG main)
 FetchContent_MakeAvailable(ffmpeg-cpp)
 target_link_libraries(myapp PRIVATE ffmpeg-cpp::ffmpeg-cpp)
 ```
